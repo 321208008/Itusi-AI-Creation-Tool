@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const API_KEY = process.env.NEXT_PUBLIC_ZHIPU_API_KEY;
-const API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4';
+const API_ENDPOINT = process.env.NEXT_PUBLIC_ZHIPU_API_ENDPOINT || 'https://open.bigmodel.cn/api/paas/v4';
+const IMAGE_MODEL = process.env.NEXT_PUBLIC_ZHIPU_IMAGE_MODEL || 'cogview-3-flash';
+const VIDEO_MODEL = process.env.NEXT_PUBLIC_ZHIPU_VIDEO_MODEL || 'cogvideox-flash';
 
 interface ImageGenerationResponse {
   created: string;
@@ -34,7 +36,7 @@ export async function generateImage(prompt: string): Promise<string> {
     const response = await axios.post<ImageGenerationResponse>(
       `${API_ENDPOINT}/images/generations`,
       {
-        model: 'cogview-3-flash',
+        model: IMAGE_MODEL,
         prompt,
         size: '1024x1024',
       },
@@ -74,7 +76,7 @@ export async function generateVideo(
     });
 
     const requestBody = {
-      model: 'cogvideox-flash',
+      model: VIDEO_MODEL,
       prompt,
       ...(imageUrl ? { image_url: imageUrl } : {}),
       with_audio: options.with_audio ?? false,
