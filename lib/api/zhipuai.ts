@@ -1,9 +1,14 @@
 import axios from 'axios';
 
-const API_KEY = process.env.NEXT_PUBLIC_ZHIPU_API_KEY ?? '';
-const API_ENDPOINT = process.env.NEXT_PUBLIC_ZHIPU_API_ENDPOINT ?? 'https://open.bigmodel.cn/api/paas/v4';
-const IMAGE_MODEL = process.env.NEXT_PUBLIC_ZHIPU_IMAGE_MODEL ?? 'cogview-3-flash';
-const VIDEO_MODEL = process.env.NEXT_PUBLIC_ZHIPU_VIDEO_MODEL ?? 'cogvideox-flash';
+const getEnvVar = (key: string, defaultValue: string = '') => {
+  const value = process.env[key];
+  return value === undefined ? defaultValue : value;
+};
+
+const API_KEY = getEnvVar('NEXT_PUBLIC_ZHIPU_API_KEY');
+const API_ENDPOINT = getEnvVar('NEXT_PUBLIC_ZHIPU_API_ENDPOINT', 'https://open.bigmodel.cn/api/paas/v4');
+const IMAGE_MODEL = getEnvVar('NEXT_PUBLIC_ZHIPU_IMAGE_MODEL', 'cogview-3-flash');
+const VIDEO_MODEL = getEnvVar('NEXT_PUBLIC_ZHIPU_VIDEO_MODEL', 'cogvideox-flash');
 
 interface ImageGenerationResponse {
   created: string;
@@ -38,7 +43,7 @@ export async function generateImage(prompt: string): Promise<string> {
 
   try {
     const response = await axios.post<ImageGenerationResponse>(
-      `${API_ENDPOINT}/images/generations`,
+      API_ENDPOINT + '/images/generations',
       {
         model: IMAGE_MODEL,
         prompt,
@@ -46,13 +51,13 @@ export async function generateImage(prompt: string): Promise<string> {
       },
       {
         headers: {
-          Authorization: `Bearer ${API_KEY}`,
+          Authorization: 'Bearer ' + API_KEY,
           'Content-Type': 'application/json',
         },
       }
     );
 
-    if (response.data.data?.[0]?.url) {
+    if (response.data && response.data.data && response.data.data[0] && response.data.data[0].url) {
       return response.data.data[0].url;
     }
     throw new Error('No image URL in response');
@@ -77,38 +82,38 @@ export async function generateVideo(
   }
 
   try {
-    const requestId = `video_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    const requestId = 'video_' + Date.now() + '_' + Math.random().toString(36).substring(2);
     const requestBody = {
       model: VIDEO_MODEL,
-      prompt,
-      ...(imageUrl ? { image_url: imageUrl } : {}),
-      with_audio: options.with_audio ?? false,
-      size: options.size ?? '1920x1080',
-      duration: options.duration ?? 5,
-      fps: options.fps ?? 30,
+      prompt: prompt,
+      image_url: imageUrl || undefined,
+      with_audio: options.with_audio || false,
+      size: options.size || '1920x1080',
+      duration: options.duration || 5,
+      fps: options.fps || 30,
       request_id: requestId,
     };
 
     const response = await axios.post<VideoGenerationResponse>(
-      `${API_ENDPOINT}/videos/generations`,
+      API_ENDPOINT + '/videos/generations',
       requestBody,
       {
         headers: {
-          Authorization: `Bearer ${API_KEY}`,
+          Authorization: 'Bearer ' + API_KEY,
           'Content-Type': 'application/json',
         },
       }
     );
 
-    if (!response.data.id) {
-      throw new Error('No task ID in response');
+    if (response.data && response.data.id) {
+      return response.data.id;
     }
-
-    return response.data.id;
+    throw new Error('No task ID in response');
   } catch (error) {
     console.error('Error generating video:', error);
-    if (axios.isAxiosError(error) && error.response?.data) {
-      throw new Error(error.response.data.error?.message || error.message);
+    if (axios.isAxiosError(error) && error.response && error.response.data) {
+      const message = error.response.data.error && error.response.data.error.message;
+      throw new Error(message || error.message);
     }
     throw error;
   }
@@ -121,10 +126,10 @@ export async function getVideoResult(id: string): Promise<VideoResultResponse> {
 
   try {
     const response = await axios.get<VideoResultResponse>(
-      `${API_ENDPOINT}/async-result/${id}`,
+      API_ENDPOINT + '/async-result/' + id,
       {
         headers: {
-          Authorization: `Bearer ${API_KEY}`,
+          Authorization: 'Bearer ' + API_KEY,
         },
       }
     );
