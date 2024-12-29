@@ -1,9 +1,13 @@
 import axios from 'axios';
 
-const API_KEY = process.env.NEXT_PUBLIC_ZHIPU_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_ZHIPU_API_KEY || '';
 const API_ENDPOINT = process.env.NEXT_PUBLIC_ZHIPU_API_ENDPOINT || 'https://open.bigmodel.cn/api/paas/v4';
 const IMAGE_MODEL = process.env.NEXT_PUBLIC_ZHIPU_IMAGE_MODEL || 'cogview-3-flash';
 const VIDEO_MODEL = process.env.NEXT_PUBLIC_ZHIPU_VIDEO_MODEL || 'cogvideox-flash';
+
+if (!API_KEY) {
+  console.warn('Warning: NEXT_PUBLIC_ZHIPU_API_KEY is not set');
+}
 
 interface ImageGenerationResponse {
   created: string;
@@ -32,6 +36,10 @@ interface VideoResultResponse {
 }
 
 export async function generateImage(prompt: string): Promise<string> {
+  if (!API_KEY) {
+    throw new Error('API key is not configured');
+  }
+
   try {
     const response = await axios.post<ImageGenerationResponse>(
       `${API_ENDPOINT}/images/generations`,
@@ -68,6 +76,10 @@ export async function generateVideo(
     fps?: 30 | 60;
   } = {}
 ): Promise<string> {
+  if (!API_KEY) {
+    throw new Error('API key is not configured');
+  }
+
   try {
     console.log('Sending video generation request with:', {
       prompt,
@@ -117,6 +129,10 @@ export async function generateVideo(
 }
 
 export async function getVideoResult(id: string): Promise<VideoResultResponse> {
+  if (!API_KEY) {
+    throw new Error('API key is not configured');
+  }
+
   try {
     const response = await axios.get<VideoResultResponse>(
       `${API_ENDPOINT}/async-result/${id}`,
