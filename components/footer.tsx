@@ -8,9 +8,9 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full py-6 border-t">
-      <div className="container flex flex-col items-center justify-center gap-2">
-        <div className="flex items-center justify-center space-x-4">
+    <footer className="fixed bottom-0 left-0 right-0 py-6 border-t bg-background">
+      <div className="max-w-screen-xl mx-auto px-4 flex flex-col items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-6">
           <a
             href="https://github.com/321208008"
             target="_blank"
@@ -36,7 +36,7 @@ export function Footer() {
             <Globe className="h-5 w-5" />
           </a>
         </div>
-        <div className="text-sm text-muted-foreground text-center">
+        <div className="text-sm text-muted-foreground">
           <p>{t.footer.copyright.replace('{year}', currentYear.toString())}</p>
         </div>
       </div>
