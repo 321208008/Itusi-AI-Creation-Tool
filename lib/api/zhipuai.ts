@@ -1,14 +1,9 @@
 import axios from 'axios';
 
-const getEnvVar = (key: string, defaultValue: string = '') => {
-  const value = process.env[key];
-  return value === undefined ? defaultValue : value;
-};
-
-const API_KEY = getEnvVar('NEXT_PUBLIC_ZHIPU_API_KEY');
-const API_ENDPOINT = getEnvVar('NEXT_PUBLIC_ZHIPU_API_ENDPOINT', 'https://open.bigmodel.cn/api/paas/v4');
-const IMAGE_MODEL = getEnvVar('NEXT_PUBLIC_ZHIPU_IMAGE_MODEL', 'cogview-3-flash');
-const VIDEO_MODEL = getEnvVar('NEXT_PUBLIC_ZHIPU_VIDEO_MODEL', 'cogvideox-flash');
+const API_KEY = process.env.NEXT_PUBLIC_ZHIPU_API_KEY;
+const API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4';
+const IMAGE_MODEL = 'cogview-3-flash';
+const VIDEO_MODEL = 'cogvideox-flash';
 
 interface ImageGenerationResponse {
   created: string;
@@ -36,33 +31,38 @@ interface VideoResultResponse {
   }>;
 }
 
-export async function generateImage(prompt: string): Promise<string> {
+export async function generateImage(prompt: string, size: string = '1024x1024'): Promise<string> {
   if (!API_KEY) {
+    console.error('API key is missing. Please check your .env.local file.');
+    console.error('Current API key:', API_KEY);
     throw new Error('API key is not configured');
   }
 
   try {
     const response = await axios.post<ImageGenerationResponse>(
-      API_ENDPOINT + '/images/generations',
+      `${API_ENDPOINT}/images/generations`,
       {
         model: IMAGE_MODEL,
         prompt,
-        size: '1024x1024',
+        size,
       },
       {
         headers: {
-          Authorization: 'Bearer ' + API_KEY,
+          Authorization: `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
         },
       }
     );
 
-    if (response.data && response.data.data && response.data.data[0] && response.data.data[0].url) {
+    if (response.data?.data?.[0]?.url) {
       return response.data.data[0].url;
     }
     throw new Error('No image URL in response');
   } catch (error) {
     console.error('Error generating image:', error);
+    if (axios.isAxiosError(error) && error.response?.data) {
+      throw new Error(error.response.data.error?.message || error.message);
+    }
     throw error;
   }
 }
